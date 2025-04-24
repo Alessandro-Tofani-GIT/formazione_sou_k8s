@@ -1,0 +1,88 @@
+---
+- name: Installa Docker e configura rete
+  become: yes
+  hosts: rocky
+  tasks:
+    - name: set up docker
+      ansible.builtin.shell: |
+        dnf install -y yum-utils
+        yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      
+
+    - name: installa docker
+      package:
+        name:
+          - docker-ce
+        state: present
+    
+    - name: install pip
+      become: yes
+      package:
+        name: python3-pip
+        update_cache: yes
+        state: present
+ 
+
+    - name: Installa le librerie Python necessarie per usare il modulo community.docker
+      ansible.builtin.pip:
+        name:
+          - docker
+          - requests
+        executable: pip3
+
+   
+   
+    - name: Start Docker and enable
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+    
+          
+- name: Step 2 - Configurazione rete e container Docker
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Crea rete Docker bridge 
+      community.docker.docker_network:
+        name: my_network
+        driver: bridge
+        ipam_config:
+          - subnet: "192.168.100.0/24"
+            gateway: "192.168.100.1"
+
+    - name: Volume data for jenkins
+      community.docker.docker_volume:
+        volume_name: jenkins_volume
+        state: present
+
+
+    - name: avvio container jenkins
+      community.docker.docker_container:
+        name: jenkins
+        image: docker.io/jenkins/jenkins:latest
+        state: started
+        volumes:
+          - jenkins-data:/var/jenkins_home
+        ports:
+          - "50000:50000"
+          - "8080:8080"
+        networks:
+          - name: my_network
+            
+    
+    - name: avvio container agent jankins
+      community.docker.docker_container:
+        name: jenkins-agent
+        image: jenkins/inbound-agent:latest
+        state: started
+        restart_policy: unless-stopped
+        networks:
+          - name: my_network
+            ipv4_address: 192.168.100.9
+        env:
+          JENKINS_URL: "http://192.168.33.10:8080"
+          JENKINS_AGENT_NAME: "jenkins-agent-01"
+          JENKINS_SECRET: "c646ebc4d5ae70bfd36b9eb3b95861f3d3199223556ef16c50ebde555bbcd61b" 
+        
