@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_NETWORK = "my_network"
+        DOCKER_CREDENTIALS = "dockerhub-credential"
+        REPO_URL = 'https://github.com/Alessandro-Tofani-GIT/formazione_sou_k8s'
+        REPO_DIR = 'formazione_sou_k8s'
+    }
+
+    stages {
+        stage('Docker login') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh 'echo "$DOCKER_PASS" | sudo docker login -u "$DOCKER_USER" --password-stdin'
+                    }
+                }
+            }
+        }
+
+        stage('Pull Git') {
+            steps {
+                script {
+                    sh 'git pull $REPO_URL'
+                }
+                //git branch: 'main', url: 'git@github.com/Alessandro-Tofani-GIT/formazione_sou_k8s'
+
+            
+                
+            }
+        }
+
+        stage('Build and Push Image') {
+            steps {
+                dir('formazione_sou_k8s/Step2/flask_app') {
+                    sh 'ls -la'
+                    sh ' docker build -f Dockerfile -t flask-my-app:0.0.1 .'
+                    sh ' docker images'
+
+                    sh ' docker tag flask-my-app:0.0.1 alessandrotofani/flask-my-app:latest'
+                    sh ' sudo docker push alessandrotofani/flask-my-app:latest'
+                    
+                }
+            }
+        }
+    }
+}
