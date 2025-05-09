@@ -6,6 +6,9 @@ pipeline {
         DOCKER_CREDENTIALS = "dockerhub-credential"
         REPO_URL = 'https://github.com/Alessandro-Tofani-GIT/formazione_sou_k8s'
         REPO_DIR = 'formazione_sou_k8s'
+        IMAGE_TAG = ""
+        
+        
     }
 
     stages {
@@ -14,35 +17,125 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh 'echo "$DOCKER_PASS" | sudo docker login -u "$DOCKER_USER" --password-stdin'
+                        sh 'sudo chown root:docker /var/run/docker.sock'
+                        echo "Add own Docker group in /var/run/docker.sock "
+                        sh 'ls -l /var/run/docker.sock'
                     }
                 }
             }
         }
+        stage('check image') {
+            steps {
+                script {
+                    def tagFound = sh(script: "git tag | grep -w $TAG_IMAGE || true", returnStdout: true).trim()
+                    if (env.BRANCH == 'main') {
+                        IMAGE_TAG = "latest"
+                        echo "${IMAGE_TAG}"
+                    
+                    }
+                    else if (env.BRANCH == 'develop') {
+                        def commitSHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                        IMAGE_TAG = "develop-${commitSHA}"
+                        echo "${IMAGE_TAG}"                   
+                    } 
+                    else if (env.TAG_IMAGE == "${tagFound}") {
+                        IMAGE_TAG = "${TAG_IMAGE}"
+                        echo "${IMAGE_TAG}"
+                    }
+                        
+                        
+
+                    
+                    
+                    }
+                }
+            }
+        
 
         stage('Pull Git') {
             steps {
                 script {
-                    sh 'git pull $REPO_URL'
-                }
-                //git branch: 'main', url: 'git@github.com/Alessandro-Tofani-GIT/formazione_sou_k8s'
+                    echo "${BRANCH}"
+                    echo "${IMAGE_TAG}"
+                    def tagFound = sh(script: "git tag | grep -w $TAG_IMAGE || true", returnStdout: true).trim()
+                    if (!fileExists(REPO_DIR)) {
+                        echo "Clonando il repository..."
+                        echo "${BRANCH}"
+                        sh """
+                            git clone ${REPO_URL} ${REPO_DIR}
+                            cd ${REPO_DIR}
+                            
+                            git checkout ${BRANCH}
+                        """
+                       
+                    } else if (env.BRANCH == 'main') {
+                        echo "Il repository esiste già, eseguendo git pull da branch main..."
+                        sh """
+                            cd ${REPO_DIR}
+                            git checkout ${params.BRANCH}  # Assicurati di essere sulla branch giusta
+                            git pull origin ${params.BRANCH}  # Esegui un pull per aggiornare
+                            ls -la
+                            cd Step2
+                            ls -la
+                            pwd
+                            echo $IMAGE_TAG
+                            docker build -f Dockerfile -t flask-my-app:$IMAGE_TAG .
+                            docker tag flask-my-app:$IMAGE_TAG alessandrotofani/flask-my-app:$IMAGE_TAG
+                            sudo docker push alessandrotofani/flask-my-app:$IMAGE_TAG
+                            docker images
+                        """
+                    } else if (env.BRANCH  == 'develop') {
+                        echo "Eseguendo git pull da branch develop..."
+                        sh """
+                            pwd
+                            cd $REPO_DIR
+                            
+                            
+                            ls -la
+                            git checkout ${params.BRANCH}  #
+                            git pull origin ${params.BRANCH}  # 
+                            ls -la
+                            pwd
+                            cd Step2/flask-app
+                            ls -la
+                            echo $IMAGE_TAG
+                            docker build -f Dockerfile -t flask-my-app:$IMAGE_TAG .
+                            docker tag flask-my-app:$IMAGE_TAG alessandrotofani/flask-my-app:$IMAGE_TAG
+                            sudo docker push alessandrotofani/flask-my-app:$IMAGE_TAG
+                            docker images
+                        """
 
-            
-                
-            }
-        }
 
-        stage('Build and Push Image') {
-            steps {
-                dir('formazione_sou_k8s/Step2/flask_app') {
-                    sh 'ls -la'
-                    sh ' docker build -f Dockerfile -t flask-my-app:0.0.1 .'
-                    sh ' docker images'
+                    }
+                    else if (env.TAG_IMAGE == "${tagFound}") {
+                        echo "Eseguendo git pull da branch develop..."
+                        sh """
+                            pwd
+                            cd $REPO_DIR                                                      
+                            ls -la
+                            git checkout ${params.BRANCH}  #
+                            git pull origin ${params.BRANCH}  # 
+                            git tag | grep $TAG_IMAGE && echo "Il tag $TAG_IMAGE è stato trovato"
 
-                    sh ' docker tag flask-my-app:0.0.1 alessandrotofani/flask-my-app:latest'
-                    sh ' sudo docker push alessandrotofani/flask-my-app:latest'
-                    
+                            ls -la
+                            pwd
+                            cd Step2/flask-app
+                            git fetch --tag
+                            
+                            ls -la
+                            echo $IMAGE_TAG
+                            docker build -f Dockerfile -t flask-my-app:$IMAGE_TAG .
+                            docker tag flask-my-app:$IMAGE_TAG alessandrotofani/flask-my-app:$IMAGE_TAG
+                            sudo docker push alessandrotofani/flask-my-app:$IMAGE_TAG
+                            docker images
+                        """
+
+
+                    }
                 }
             }
         }
     }
 }
+
+
