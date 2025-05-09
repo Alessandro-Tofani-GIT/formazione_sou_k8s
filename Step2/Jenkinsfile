@@ -108,7 +108,7 @@ pipeline {
 
                     }
                     else if (env.TAG_IMAGE == "${tagFound}") {
-                        echo "Eseguendo git pull da branch develop..."
+                        echo "Eseguo git pull e creo immagine TAG ..."
                         sh """
                             pwd
                             cd $REPO_DIR                                                      
@@ -137,5 +137,4 @@ pipeline {
         }
     }
 }
-
 
