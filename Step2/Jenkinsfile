@@ -113,15 +113,14 @@ pipeline {
                             pwd
                             cd $REPO_DIR                                                      
                             ls -la
-                            git checkout ${params.BRANCH}  #
-                            git pull origin ${params.BRANCH}  # 
+                            git fetch -all -tags
+                            git checkout $TAG_IMAGE  
+                            echo 'git pull origin ${params.BRANCH}'  
                             git tag | grep $TAG_IMAGE && echo "Il tag $TAG_IMAGE è stato trovato"
-
                             ls -la
                             pwd
                             cd Step2/flask-app
                             git fetch --tag
-                            
                             ls -la
                             echo $IMAGE_TAG
                             docker build -f Dockerfile -t flask-my-app:$IMAGE_TAG .
