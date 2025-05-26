@@ -57,4 +57,3 @@ else
   echo "✅ Deployment valido"
   exit 0
 fi
-
