@@ -29,10 +29,6 @@ curl --insecure -H "Authorization: Bearer $TOKEN_SA" \
 sleep 5
 
 
-# READINESS_SEARCH=$(cat $FILE | grep readines)
-# LIVENESS_SEARCH=$(cat $FILE| grep liveness)
-# LIMITS_SEARCH=$(cat deploy.yaml | grep resources.limits )
-# REQUESTS_SEARCH=$(cat deploy.yaml | grep resources.requests)
 
 ERROR=0
     
