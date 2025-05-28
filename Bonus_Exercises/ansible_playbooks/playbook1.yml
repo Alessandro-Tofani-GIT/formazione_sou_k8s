@@ -1,0 +1,42 @@
+- name: Users
+  vars:
+    list-user:
+      - user: Marco
+        state: present
+        groups: "develop"
+        shell: /bin/bash
+        home: /home/Marco
+      - user: Asia
+        state: present
+        groups: "develop"
+        shell: /bin/bash
+        home: /home/Asia
+    
+
+
+  tasks:
+  - name: Check su Group
+    ansible.builtin.group:
+      group: {{item.groups}}
+      state: present
+    loop: {{list-user}}
+    loop_control:
+      label: {{item.groups}}
+
+
+
+    
+
+- name: Aggiungo User nel Group develop
+  tasks:
+    ansible.builtin.user:
+      name: {{item.user}}
+      group: {{item.groups}}
+      shell: {{item.shell}}
+      home: {{item.home}}
+      append: yes
+    loop: {{list-user}}
+    loop_control:
+      label: {{ item.name }}""
+
+  

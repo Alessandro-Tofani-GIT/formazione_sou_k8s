@@ -1,0 +1,22 @@
+- name: start
+  hosts: all
+  become: yes
+
+  vars:
+    lista:
+      - name: apache
+        state: present
+      - name: ntpdate
+        state: absent
+      - name: git
+        state: present
+      - name: lolcat 
+        state: present
+
+  tasks:
+    - name: installa e rimuovi pacchetti
+      ansible.builtin.package:
+        name: "{{ item.name }}"
+        state: "{{ item.state }}"
+      loop: "{{ lista }}"
+
