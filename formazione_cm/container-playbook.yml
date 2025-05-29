@@ -1,0 +1,66 @@
+---
+- name: Installa Docker e configura il registry
+  become: yes
+  hosts: rocky
+
+  vars:
+      
+    docker_packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+
+  tasks:
+    - name: Installa yum-utils
+      ansible.builtin.package:
+        name: yum-utils
+        state: present
+
+    - name: Aggiunge repo Docker
+      ansible.builtin.shell: >
+        yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      args:
+        creates: /etc/yum.repos.d/docker-ce.repo
+
+    - name: Installa Docker
+      ansible.builtin.package:
+        name: "{{ docker_packages }}"
+        state: present
+
+    - name: Avvia e abilita il servizio Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Installa pip
+      ansible.builtin.package:
+        name: python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Installa librerie Python necessarie
+      ansible.builtin.pip:
+        name:
+          - docker
+          - requests
+        executable: pip3
+
+    - name: Avvia un container test (Docker image ufficiale)
+      community.docker.docker_container:
+        name: docker-container
+        image: docker
+        state: started
+
+    - name: Avvia Registry Docker
+      community.docker.docker_container:
+        name: registry-container
+        image: registry:2
+        state: started
+        restart_policy: always
+        published_ports:
+          - "5000:5000"
+        volumes:
+          - /opt/registry:/var/lib/registry
+
+      
