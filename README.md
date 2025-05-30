@@ -1,9 +1,20 @@
-# Academy DevOps Track 2 Exercises
+# Esercizi Academy DevOps Track 2
 
-## Welcome in formazione_sou_k8s
+## Benvenuto in formazione_sou_k8s
 
-This repository contains the exercises from the second track of the academy that I worked on, along with the tasks requested
+Questo repository contiene gli esercizi della Track 2  presenti nel percorso dell'Academy Sourcesense su cui ho lavorato, insieme alle attività richieste.
 
-### Step1
+### Step 1
 
-In the Step1 directory, there is a playbook.yaml that runs Jenkins in a Docker container along with a persistent Jenkins agent. This exercise is not fully automated because you need to manually create the agent inside Jenkins. Afterward, you will need to copy and paste the JENKINS_AGENT_NAME and JENKINS_SECRET from Jenkins into the playbook.yaml.
+Nella directory **Step1**, si trova un file **playbook.yaml** che esegue Jenkins in un contenitore Docker, insieme a un agente Jenkins persistente. Questo esercizio non è completamente automatizzato, poiché è necessario creare manualmente l'agente all'interno di Jenkins. Successivamente, dovrai copiare e incollare il **JENKINS_AGENT_NAME** e il **JENKINS_SECRET** da Jenkins nel file **playbook.yaml**.
+
+### Step 2
+
+
+
+
+
+
+
+
+
