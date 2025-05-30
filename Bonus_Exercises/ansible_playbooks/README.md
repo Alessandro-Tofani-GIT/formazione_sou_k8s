@@ -34,7 +34,7 @@ Il playbook sfrutta i dizionari per definire le proprietà degli utenti e i loop
 
 Per eseguire il playbook:
 
-- **bash
+- **bash**
 ansible-playbook nome_playbook.yaml
 
 ---
@@ -71,6 +71,6 @@ Questa struttura consente di aggiungere, rimuovere o modificare pacchetti sempli
 
 Per eseguire il playbook:
 
-```bash
+- **bash**
 ansible-playbook nome_playbook.yaml
 
