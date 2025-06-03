@@ -1,0 +1,87 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_CREDENTIALS = 'DOCKER_CREDENTIALS'  // Nome delle credenziali Docker
+        REPO_URL = 'https://github.com/Alessandro-Tofani-GIT/formazione_sou_k8s'  // URL del repository GitHub
+        REPO_DIR = 'formazione_sou_k8s'
+        BRANCH = 'main'  // Aggiungi il nome del branch (puoi modificarlo se necessario)
+        NAME_CHART = 'flask-app'
+        CHART= 'my-charts'
+        INGRESS_NAME= 'flask-ingr'
+    }
+    
+    stages {
+        stage('Installo Helm') {
+            steps {
+                script {
+                    sh """
+                        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+                        chmod 700 get_helm.sh
+                        ./get_helm.sh
+                    """
+                }
+            }
+        }
+        
+        stage('Installo kubectl') {
+            steps {
+                script {
+                    sh '''
+                        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+                        kubectl version --client
+                        kubectl cluster-info
+                        
+                        
+                    '''
+                }
+            }
+        }
+        
+        stage('Docker login') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh 'echo "$DOCKER_PASS" | sudo docker login -u "$DOCKER_USER" --password-stdin'
+                    }
+                }
+            }
+        }
+        
+        stage('Pulling Charts') {
+            steps {
+                script {
+                    // Verifica se la directory del repository esiste
+                    if (!fileExists(REPO_DIR)) {
+                        echo "Clonando il repository..."
+                        sh """
+                            git clone ${REPO_URL} ${REPO_DIR}
+                            cd ${REPO_DIR}
+                            
+                        """
+                    } else {
+                        // Esegui git pull nella directory del repository
+                            sh """
+                            cd ${REPO_DIR}
+                            git pull origin ${BRANCH}
+                            git branch
+                            ls -la && cd Charts
+                            kubectl cluster-info
+                            helm install ${NAME_CHART} ${CHART}
+                            kubectl get namespace
+                            
+                            
+                            
+                           
+                            """
+                            
+                           
+                        
+                    }
+                }
+            }
+        }
+    }
+}
+
