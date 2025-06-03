@@ -8,7 +8,7 @@ pipeline {
         BRANCH = 'main'  // Aggiungi il nome del branch (puoi modificarlo se necessario)
         NAME_CHART = 'flask-app'
         CHART= 'my-charts'
-        INGRESS_NAME= 'flask-ingr'
+        
     }
     
     stages {
