@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_CREDENTIALS = 'DOCKER_CREDENTIALS'  // Nome delle credenziali Docker
+        
         REPO_URL = 'https://github.com/Alessandro-Tofani-GIT/formazione_sou_k8s'  // URL del repository GitHub
         REPO_DIR = 'formazione_sou_k8s'
         BRANCH = 'main'  // Aggiungi il nome del branch (puoi modificarlo se necessario)
@@ -39,15 +39,7 @@ pipeline {
             }
         }
         
-        stage('Docker login') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh 'echo "$DOCKER_PASS" | sudo docker login -u "$DOCKER_USER" --password-stdin'
-                    }
-                }
-            }
-        }
+        
         
         stage('Pulling Charts') {
             steps {
