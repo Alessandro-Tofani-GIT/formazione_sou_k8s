@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nfs-inline-pod
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["/bin/sh", "-c", "sleep 3600"]
+    volumeMounts:
+    - name: nfs-volume
+      mountPath: /mnt/nfs
+  volumes:
+  - name: nfs-volume
+    nfs:
+      server: 192.168.2.127
+      path: /srv/nfs/data
+      readOnly: false
