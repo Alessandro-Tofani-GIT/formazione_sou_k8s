@@ -1,0 +1,57 @@
+# ServiceAccount per il pod
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubectl-service-account
+  namespace: prova-test
+automountServiceAccountToken: true
+
+---
+# Role con permessi per fare get dei pod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: prova-test
+  name: pod-reader
+rules:
+apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+
+---
+# RoleBinding che collega il ServiceAccount al Role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: prova-test
+subjects:
+kind: S
+erviceAccount
+  name: kubectl-service-account
+  namespace: prova-test
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Pod di esempio con kubectl
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kubectl-pod
+  namespace: prova-test
+spec:
+  serviceAccountName: kubectl-service-account
+  containers:
+  - name: kubectl-container
+    image: bitnami/kubectl:latest
+    command: ["sleep"]
+    args: ["3600"]  # Mantiene il pod attivo per 1 ora
+    env:
+    - name: KUBERNETES_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+  restartPolicy: Never

@@ -1,0 +1,54 @@
+---
+
+- name: installa jenkins
+  ansible.builtin.shell: |
+    sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+    https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+    echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]" \
+    https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+    /etc/apt/sources.list.d/jenkins.list > /dev/null
+    sudo apt-get update
+    sudo apt-get install jenkins
+
+- name: install java e fontconfig
+  apt:
+    name:
+      - fontconfig
+      - openjdk-21-jre
+    state: present
+    update_cache: yes
+  become: yes
+      
+- name: start jenkins
+  ansible.builtin.systemd: 
+    name: jenkins
+    state: started
+    enabled: yes
+
+
+- name: Estraggo crumb, creo api-token e genero agent_slave
+  ansible.builtin.shell: |
+    CRUMB=$(curl -u alessandro:{{Token_Master}} -c {{Cookie_file}}  http://localhost:8080/crumbIssuer/api/json | jq -r ".crumb")
+      
+
+
+    API_TOKEN=$(curl -X POST http://localhost:8080/me/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken \                                                                                                                                   -b jenkins_cookies.txt \                                                                                                                -u alessandro:sourcesense \                                                               
+    -H "Jenkins-Crumb: $CRUMB" \
+    --data "newTokenName=token-da-script")
+    API_TOKEN_JSON=$(echo "$API_TOKEN" | jq -r '.data.tokenValue')
+      
+
+    curl -u alessandro:$API_TOKEN_JSON \
+    -H "Jenkins-Crumb: $CRUMB" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -X POST "http://localhost:8080/computer/doCreateItem" \
+    --data-urlencode "name={{Agent_slave_name}}" \
+    --data-urlencode "type=hudson.slaves.DumbSlave" \
+    --data-urlencode "json={
+    \"name\": \"{{Agent_slave_name}}\",
+    \"nodeDescription\": \"\",
+    \"numExecutors\": \"1\",
+    \"remoteFS\": \"/home/jenkins/agent\",
+    \"labelString\": \"\",
+    \"mode\": \"EXCLUSIVE\"
+    }"

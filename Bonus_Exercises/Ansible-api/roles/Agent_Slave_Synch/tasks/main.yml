@@ -1,0 +1,33 @@
+---
+- name: install java e fontconfig
+  apt:
+    name:
+      - fontconfig
+      - openjdk-21-jre
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: controlla versione java
+  command: java -version
+
+
+- name: Scarica agent.jar da Jenkins master
+  ansible.builtin.shell: |
+    curl -O http://192.168.2.111:8080/jnlpJars/agent.jar
+  
+
+- name: Estrai il secret per il nodo agente
+  ansible.builtin.shell: >
+    curl -s -u alessandro:{{Token_Master}} "http://192.168.2.111:8080/computer/{{Agent_slave_name}}/jenkins-agent.jnlp" | grep -oP '<argument>\K[a-f0-9]{64}(?=</argument>)'
+  register: SECRET
+
+- name: debug secret
+  debug:
+    var: SECRET.stdout
+
+- name: Avvia Jenkins agent con il secret ricevuto
+  ansible.builtin.shell: |
+    mkdir -p /home/jenkins
+    echo "{{SECRET.stdout}}" > /home/jenkins/agent.secret
+    sudo java -jar agent.jar -url http://192.168.2.111:8080/ -secret "{{SECRET.stdout}}"  -name "{{Agent_slave_name}}" -webSocket -workDir "/home/jenkins/agent" &

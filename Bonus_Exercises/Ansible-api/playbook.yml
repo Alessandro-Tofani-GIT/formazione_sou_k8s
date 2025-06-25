@@ -1,0 +1,26 @@
+---
+
+
+- name: Jenkins Master
+  become: yes
+  hosts: rocky
+  vars_files:
+    - Vault_file/vault.yml
+  vars:
+    Cookie_file:  jenkins_cookies.txt
+    Agent_slave_name: agent-Livio
+  
+  roles:
+    - Agent_Slave_Create
+
+- name: Jenkins Slave
+  become: yes
+  hosts: ubuntu
+  vars_files:
+    - Vault_file/vault.yml
+  vars:
+    Cookie_file:  jenkins_cookies.txt
+    Agent_slave_name: agent-Livio
+  
+  roles:
+    - Agent_Slave_Synch
