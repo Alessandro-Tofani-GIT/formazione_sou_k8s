@@ -1,0 +1,95 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-formazionesou
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "demo.local"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/eng"
+        backend:
+          service:
+            name: eng-service
+            port:
+              number: 80
+      - pathType: Prefix
+        path: "/ita"
+        backend:
+          service:
+            name: ita-service
+            port:
+              number: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ita-deployment
+  labels:
+    app: italia
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: italia
+  template:
+    metadata:
+      labels:
+        app: italia
+    spec:
+      containers:
+      - name: italia-deploy
+        image: italia:1.1
+        ports:
+        - containerPort: 5000
+      
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ita-service
+spec:
+  selector:
+    app: italia
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eng-deployment
+  labels:
+    app: uk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: uk
+  template:
+    metadata:
+      labels:
+        app: uk
+    spec:
+      containers:
+      - name: uk-deploy
+        image: inglese:1.1
+        ports:
+        - containerPort: 5000
+      
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eng-service
+spec:
+  selector:
+    app: uk
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
