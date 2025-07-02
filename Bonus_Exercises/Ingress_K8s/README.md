@@ -40,7 +40,7 @@ Aggiungi la seguente riga all'interno del file per risolvere demo.local localmen
 ### 3. Applica le risorse:
 
 ```bash
-kubectl apply -f manifest.yaml
+kubectl apply -f manifest.yml
 ```
 
 ### 4. Verifica sulle risorse
