@@ -8,7 +8,7 @@
     - Vault_file/vault.yml
   vars:
     Cookie_file:  jenkins_cookies.txt
-    Agent_slave_name: agent-Livio
+    Agent_slave_name: agenteprova
   
   roles:
     - Agent_Slave_Create
@@ -20,7 +20,7 @@
     - Vault_file/vault.yml
   vars:
     Cookie_file:  jenkins_cookies.txt
-    Agent_slave_name: agent-Livio
+    Agent_slave_name: agenteprova
   
   roles:
     - Agent_Slave_Synch

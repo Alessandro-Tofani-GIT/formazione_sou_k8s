@@ -24,31 +24,70 @@
     name: jenkins
     state: started
     enabled: yes
+- name: Ottieni crumb da Jenkins e salva cookie JSESSIONID
+  ansible.builtin.uri:
+    url: http://localhost:8080/crumbIssuer/api/json
+    method: GET
+    user: alessandro
+    password: "{{ Token_Master }}"
+    force_basic_auth: yes
+    return_content: yes
+    status_code: 200
+  register: crumb_response
 
+- name: Estrai JSESSIONID dal cookie (header Set-Cookie)
+  set_fact:
+    jenkins_cookie: "{{ crumb_response.cookies.JSESSIONID }}"
 
-- name: Estraggo crumb, creo api-token e genero agent_slave
-  ansible.builtin.shell: |
-    CRUMB=$(curl -u alessandro:{{Token_Master}} -c {{Cookie_file}}  http://localhost:8080/crumbIssuer/api/json | jq -r ".crumb")
-      
+- name: Genera nuovo API token (POST con CSRF protection)
+  ansible.builtin.uri:
+    url: http://localhost:8080/me/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken
+    method: POST
+    user: alessandro
+    password: "{{ Token_Master }}"
+    force_basic_auth: yes
+    headers:
+      "{{ crumb_response.json.crumbRequestField }}": "{{ crumb_response.json.crumb }}"
+      Content-Type: application/x-www-form-urlencoded
+      Cookie: "JSESSIONID={{ jenkins_cookie }}"
+    body: "newTokenName=token-da-script"
+    body_format: form-urlencoded
+    return_content: yes
+    status_code: 200
+  register: api_token_response
 
+- name: Estrai token API dalla risposta JSON
+  set_fact:
+    jenkins_api_token: "{{ api_token_response.json.data.tokenValue }}"
 
-    API_TOKEN=$(curl -X POST http://localhost:8080/me/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken \                                                                                                                                   -b jenkins_cookies.txt \                                                                                                                -u alessandro:sourcesense \                                                               
-    -H "Jenkins-Crumb: $CRUMB" \
-    --data "newTokenName=token-da-script")
-    API_TOKEN_JSON=$(echo "$API_TOKEN" | jq -r '.data.tokenValue')
-      
+- name: Crea nodo agente Jenkins via API con token
+  ansible.builtin.uri:
+    url: http://localhost:8080/computer/doCreateItem
+    method: POST
+    user: alessandro
+    password: "{{ jenkins_api_token }}"
+    force_basic_auth: yes
+    headers:
+      Jenkins-Crumb: "{{ crumb_response.json.crumb }}"
+      Content-Type: application/x-www-form-urlencoded
+      Cookie: "JSESSIONID={{ jenkins_cookie }}"
+    body_format: form-urlencoded
+    body:
+      name: "{{ Agent_slave_name }}"
+      type: "hudson.slaves.DumbSlave"
+      json: >-
+        {
+          "name": "{{ Agent_slave_name }}",
+          "nodeDescription": "",
+          "numExecutors": "1",
+          "remoteFS": "/home/jenkins/agent",
+          "labelString": "",
+          "mode": "EXCLUSIVE"
+        }
+    status_code: 302
+  register: create_agent_response
 
-    curl -u alessandro:$API_TOKEN_JSON \
-    -H "Jenkins-Crumb: $CRUMB" \
-    -H "Content-Type: application/x-www-form-urlencoded" \
-    -X POST "http://localhost:8080/computer/doCreateItem" \
-    --data-urlencode "name={{Agent_slave_name}}" \
-    --data-urlencode "type=hudson.slaves.DumbSlave" \
-    --data-urlencode "json={
-    \"name\": \"{{Agent_slave_name}}\",
-    \"nodeDescription\": \"\",
-    \"numExecutors\": \"1\",
-    \"remoteFS\": \"/home/jenkins/agent\",
-    \"labelString\": \"\",
-    \"mode\": \"EXCLUSIVE\"
-    }"
+- name: Debug risposta creazione agente
+  debug:
+    var: create_agent_response.status
+
