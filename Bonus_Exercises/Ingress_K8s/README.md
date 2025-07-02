@@ -29,7 +29,7 @@ Installa Ingress Controller NGINX:
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.5.1/deploy/static/provider/cloud/deploy.yaml
 ```
 
-### 2. Modifica il file `/etc/host`
+### 2. Modifica il file `/etc/hosts`
 
 Aggiungi la seguente riga all'interno del file per risolvere demo.local localmente:
 
