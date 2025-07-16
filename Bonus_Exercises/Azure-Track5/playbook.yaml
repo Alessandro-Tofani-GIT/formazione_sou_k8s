@@ -1,0 +1,23 @@
+---
+
+- name: Get Token
+  hosts: all
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.10
+  vars_files:
+    - secrets.yml 
+  tasks:
+    - name: Ottieni access token per Microsoft Graph
+      azure.azcollection.azure_rm_accesstoken_info:
+        client_id: "{{client_id}}"
+        secret: "{{secret}}"
+        tenant: "{{tenant}}"
+        subscription_id: "{{subscription_id}}"
+        scopes:
+          - https://management.azure.com/.default
+      register: token_info
+
+    - debug:
+        msg: "{{token_info}}"
+
+
