@@ -20,4 +20,23 @@
     - debug:
         msg: "{{token_info}}"
 
+    - name: Lista risorse in rg
+      uri:
+        url: "https://management.azure.com/subscriptions/{{subscription_id}}/resourcegroups/formazione-sou-cloud/resources?api-version=2021-04-01"
+        method: GET
+        headers:
+          Authorization: "Bearer {{token_info.access_token}}"
+          Content-Type: "application/json"
+        return_content: yes
+      register: objects_list
+
+    - debug:
+        msg: "{{objects_list}}"
+    
+
+    - name: Salva il report nel filesystem condiviso con l'host
+      template:
+        src: ./resource_group_descrition.j2
+        dest: /home/vagrant/shared/report.md
+
 

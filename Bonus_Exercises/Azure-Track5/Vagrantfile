@@ -8,9 +8,10 @@ Vagrant.configure("2") do |ubuntu|
    ubuntu.vm.network "public_network", ip: "191.168.33.10"
    ubuntu.vm.provider "virtualbox" do |vb|
 
+
      vb.memory = "1024"
    end
-
+   ubuntu.vm.synced_folder "~/Desktop/Azure-Track5/shared", "/home/vagrant/shared"
    ubuntu.vm.provision "shell", inline: <<-SHELL
    sudo apt update 
    sudo apt install python3-pip -y
@@ -20,7 +21,9 @@ Vagrant.configure("2") do |ubuntu|
    sudo pip install  azure.mgmt.postgresqlflexibleservers azure.mgmt.mysqlflexibleservers azure.mgmt.resourcehealth
    SHELL
    ubuntu.vm.provision "ansible" do |ansible|
-      ansible.playbook = "./playbook.yaml"
+      ansible.playbook = "playbook.yaml"
+      ansible.vault_password_file = "~/vault-pass.txt"
+
    end
     
 
